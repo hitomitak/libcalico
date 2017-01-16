@@ -11,17 +11,21 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-FROM python:2.7.12
+FROM ppc64le/python:2.7
 MAINTAINER Tom Denham <tom@projectcalico.org>
 
 WORKDIR /code/
 
 RUN apt-get update && \
-    apt-get install -qy python-dev python-pip git libffi-dev libssl-dev procps && rm -rf /var/lib/apt/lists/*
+    apt-get install -qy git python-dev python-pip git libffi-dev libssl-dev procps && rm -rf /var/lib/apt/lists/*
 
 # Install the python packages needed for building binaries for Calico Python components.
 # Git is installed to allow pip installation from a Github repository.
 RUN pip --no-cache-dir install --upgrade pip
+RUN git clone https://github.com/pyinstaller/pyinstaller.git
+RUN cd pyinstaller && git checkout v3.2
+RUN cd pyinstaller && cd bootloader && python2.7 ./waf distclean all --no-lsb 
+RUN cd pyinstaller && python2.7 setup.py install
 ADD build-requirements-frozen.txt /code/
 RUN pip --no-cache-dir install -r build-requirements-frozen.txt
 ADD . /tmp/pycalico

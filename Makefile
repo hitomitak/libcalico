@@ -7,7 +7,7 @@
 SOURCE_DIR?=$(dir $(lastword $(MAKEFILE_LIST)))
 SOURCE_DIR:=$(abspath $(SOURCE_DIR))
 
-BUILD_CONTAINER_NAME?=calico/build:latest
+BUILD_CONTAINER_NAME?=hitomitak/build-ppc64le
 TEST_CONTAINER_NAME?=calico/test:latest
 
 PYCALICO=$(wildcard $(SOURCE_DIR)/calico_containers/pycalico/*.py)
