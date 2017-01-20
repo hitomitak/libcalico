@@ -33,7 +33,7 @@
 # - eliminate most isolation, (--uts=host --pid=host --net=host --privileged)
 # - volume mount your ST source code
 # - run 'nosetests'
-FROM docker
+FROM ppc64le/ubuntu:16.04
 MAINTAINER Tom Denham <tom@projectcalico.org>
 
 # Running STs in this containers require that it has all dependencies installed
@@ -42,17 +42,11 @@ MAINTAINER Tom Denham <tom@projectcalico.org>
 # We install glibc onto the official docker image (instead of adding docker to
 # the libc image) since glibc installs are more constant than the
 # docker-in-docker installation and configuration.
-RUN apk add --update python python-dev py-pip py-setuptools openssl-dev libffi-dev \
-        git musl-dev gcc tshark netcat-openbsd \
-        iptables ip6tables iproute2 iputils ipset curl && \
-        curl -o glibc.apk -L "https://github.com/andyshinn/alpine-pkg-glibc/releases/download/2.23-r1/glibc-2.23-r1.apk" && \
-        apk add --allow-untrusted glibc.apk && \
-        curl -o glibc-bin.apk -L "https://github.com/andyshinn/alpine-pkg-glibc/releases/download/2.23-r1/glibc-bin-2.23-r1.apk" && \
-        apk add --allow-untrusted glibc-bin.apk && \
-        /usr/glibc-compat/sbin/ldconfig /lib /usr/glibc/usr/lib && \
-        echo 'hosts: files mdns4_minimal [NOTFOUND=return] dns mdns4' >> /etc/nsswitch.conf && \
-        rm -f glibc.apk glibc-bin.apk && \
-        rm -rf /var/cache/apk/*
+RUN apt-get update
+RUN apt-get install -y python python-dev python-pip libssl-dev libffi-dev \
+        git gcc netcat-openbsd \
+        iptables iproute2 ipset curl etcd
+RUN yes | DEBIAN_FRONTEND=noninteractive apt-get install -y --force-yes tshark
 
 # Install libcalico and its requirements
 ADD . /tmp/pycalico
@@ -61,12 +55,6 @@ RUN pip install -r /tmp/pycalico/calico_test/requirements.txt
 
 # Add the testing framework
 ADD calico_test/tests tests
-
-# Install etcdctl
-RUN wget https://github.com/coreos/etcd/releases/download/v2.3.3/etcd-v2.3.3-linux-amd64.tar.gz && \
-    tar -xzf etcd-v2.3.3-linux-amd64.tar.gz && \
-    cd etcd-v2.3.3-linux-amd64 && \
-    ln -s etcdctl /usr/local/bin/
 
 # The container is used by mounting the code-under-test to /code
 WORKDIR /code/
